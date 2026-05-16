@@ -1,4 +1,3 @@
-
 /**
  * Helper Utility Functions
  * Reusable utility functions used throughout the application
@@ -343,3 +342,118 @@ export const randomNumber = (min: number, max: number): number => {
 };
 
 // ============================================
+// Color Helpers
+// ============================================
+
+/**
+ * Convert hex color to RGB
+ */
+export const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result
+    ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
+    : null;
+};
+
+/**
+ * Get contrast color (black or white) for background
+ */
+export const getContrastColor = (hexColor: string): string => {
+  const rgb = hexToRgb(hexColor);
+  if (!rgb) return '#000000';
+
+  const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+  return brightness > 128 ? '#000000' : '#FFFFFF';
+};
+
+// ============================================
+// Async Helpers
+// ============================================
+
+/**
+ * Sleep/delay function
+ */
+export const sleep = (ms: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+/**
+ * Retry async function
+ */
+export const retry = async <T>(
+  fn: () => Promise<T>,
+  retries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries <= 0) throw error;
+    await sleep(delay);
+    return retry(fn, retries - 1, delay);
+  }
+};
+
+/**
+ * Debounce function
+ */
+export const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+/**
+ * Throttle function
+ */
+export const throttle = <T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): ((...args: Parameters<T>) => void) => {
+  let inThrottle: boolean = false;
+
+  return (...args: Parameters<T>) => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+};
+
+// ============================================
+// Platform Helpers
+// ============================================
+
+/**
+ * Check if running on Android
+ */
+export const isAndroid = (): boolean => {
+  return require('react-native').Platform.OS === 'android';
+};
+
+/**
+ * Check if running on iOS
+ */
+export const isIOS = (): boolean => {
+  return require('react-native').Platform.OS === 'ios';
+};
+
+/**
+ * Get platform-specific value
+ */
+export const platformSelect = <T>(ios: T, android: T): T => {
+  return isIOS() ? ios : android;
+};
+
+// Made with Bob
