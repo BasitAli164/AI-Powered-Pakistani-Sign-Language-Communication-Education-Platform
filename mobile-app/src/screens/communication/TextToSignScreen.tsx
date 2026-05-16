@@ -15,6 +15,37 @@ export default function TextToSignScreen() {
   const [isConverting, setIsConverting] = useState(false);
   const [language, setLanguage] = useState<'en' | 'ur'>('en');
 
+  // Map words to different icons for variety
+  const getIconForWord = (word: string): keyof typeof Ionicons.glyphMap => {
+    const iconMap: { [key: string]: keyof typeof Ionicons.glyphMap } = {
+      'hello': 'hand-right',
+      'hi': 'hand-right',
+      'thank': 'heart',
+      'thanks': 'heart',
+      'you': 'person',
+      'please': 'hand-left',
+      'help': 'help-circle',
+      'yes': 'checkmark-circle',
+      'no': 'close-circle',
+      'good': 'thumbs-up',
+      'bad': 'thumbs-down',
+      'morning': 'sunny',
+      'night': 'moon',
+      'book': 'book',
+      'door': 'exit',
+      'water': 'water',
+      'food': 'restaurant',
+      'home': 'home',
+      'love': 'heart',
+      'sorry': 'sad',
+      'happy': 'happy',
+      'sad': 'sad',
+    };
+    
+    const lowerWord = word.toLowerCase();
+    return iconMap[lowerWord] || 'hand-left';
+  };
+
   const convertToSign = () => {
     if (!inputText.trim()) return;
 
@@ -119,7 +150,11 @@ export default function TextToSignScreen() {
               <View key={index} style={styles.signCard}>
                 <View style={styles.signImageContainer}>
                   <View style={styles.signPlaceholder}>
-                    <Ionicons name="hand-left" size={48} color={COLORS.PRIMARY} />
+                    <Ionicons
+                      name={getIconForWord(sign.word)}
+                      size={48}
+                      color={COLORS.PRIMARY}
+                    />
                   </View>
                 </View>
                 

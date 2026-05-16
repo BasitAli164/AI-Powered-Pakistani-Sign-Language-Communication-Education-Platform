@@ -10,6 +10,7 @@ export default function SpeechToTextScreen() {
   const [transcribedText, setTranscribedText] = useState('');
   const [language, setLanguage] = useState<'en' | 'ur'>('en');
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const transcriptionIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -17,6 +18,23 @@ export default function SpeechToTextScreen() {
       setHasPermission(status === 'granted');
     })();
   }, []);
+
+  useEffect(() => {
+    if (isRecording) {
+      simulateTranscription();
+    } else {
+      if (transcriptionIntervalRef.current) {
+        clearInterval(transcriptionIntervalRef.current);
+        transcriptionIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (transcriptionIntervalRef.current) {
+        clearInterval(transcriptionIntervalRef.current);
+      }
+    };
+  }, [isRecording, language]);
 
   const startRecording = async () => {
     try {
@@ -65,38 +83,28 @@ export default function SpeechToTextScreen() {
 
   const simulateTranscription = () => {
     // Mock transcription - replace with actual speech-to-text API
-    const mockTexts = {
-      en: [
-        'Hello, how are you?',
-        'I need help with something.',
-        'Thank you very much.',
-        'Can you please repeat that?',
-        'I understand now.',
-      ],
-      ur: [
-        'السلام علیکم، آپ کیسے ہیں؟',
-        'مجھے کچھ مدد چاہیے۔',
-        'بہت شکریہ۔',
-        'کیا آپ دوبارہ کہہ سکتے ہیں؟',
-        'اب میں سمجھ گیا۔',
-      ],
+    const mockWords = {
+      en: ['Hello', 'how', 'are', 'you', 'I', 'need', 'help', 'Thank', 'you', 'very', 'much', 'Please', 'Can', 'you', 'repeat', 'that', 'I', 'understand', 'now', 'Good', 'morning'],
+      ur: ['السلام', 'علیکم', 'آپ', 'کیسے', 'ہیں', 'مجھے', 'مدد', 'چاہیے', 'شکریہ', 'براہ', 'کرم', 'دوبارہ', 'کہیں'],
     };
 
-    const texts = mockTexts[language];
-    let currentIndex = 0;
+    const words = mockWords[language];
+    let wordIndex = 0;
 
-    const interval = setInterval(() => {
-      if (!isRecording || currentIndex >= texts.length) {
-        clearInterval(interval);
-        return;
-      }
-
+    transcriptionIntervalRef.current = setInterval(() => {
+      const randomWord = words[Math.floor(Math.random() * words.length)];
+      
       setTranscribedText(prev => {
-        const newText = texts[currentIndex];
-        currentIndex++;
-        return prev ? `${prev} ${newText}` : newText;
+        wordIndex++;
+        if (wordIndex > 20) { // Limit to 20 words
+          if (transcriptionIntervalRef.current) {
+            clearInterval(transcriptionIntervalRef.current);
+          }
+          return prev;
+        }
+        return prev ? `${prev} ${randomWord}` : randomWord;
       });
-    }, 2000);
+    }, 1500); // Add word every 1.5 seconds
   };
 
   const toggleRecording = () => {

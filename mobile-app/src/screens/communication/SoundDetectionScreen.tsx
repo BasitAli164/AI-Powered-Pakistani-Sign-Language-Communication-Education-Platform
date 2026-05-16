@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
@@ -25,6 +25,7 @@ export default function SoundDetectionScreen() {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [detectedSounds, setDetectedSounds] = useState<DetectedSound[]>([]);
+  const detectionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [soundAlerts, setSoundAlerts] = useState<SoundAlert[]>([
     { id: '1', name: 'Doorbell', icon: 'notifications', color: '#3B82F6', enabled: true },
     { id: '2', name: 'Fire Alarm', icon: 'flame', color: '#EF4444', enabled: true },
@@ -43,6 +44,23 @@ export default function SoundDetectionScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (isMonitoring) {
+      simulateSoundDetection();
+    } else {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+        detectionIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+      }
+    };
+  }, [isMonitoring, soundAlerts]);
+
   const toggleMonitoring = () => {
     if (isMonitoring) {
       stopMonitoring();
@@ -58,9 +76,6 @@ export default function SoundDetectionScreen() {
     }
 
     setIsMonitoring(true);
-    
-    // Mock sound detection - replace with actual ML model
-    simulateSoundDetection();
   };
 
   const stopMonitoring = () => {
@@ -70,16 +85,15 @@ export default function SoundDetectionScreen() {
   const simulateSoundDetection = () => {
     const enabledAlerts = soundAlerts.filter(alert => alert.enabled);
     
-    if (enabledAlerts.length === 0) return;
+    if (enabledAlerts.length === 0) {
+      Alert.alert('No Alerts Enabled', 'Please enable at least one sound alert to start monitoring.');
+      setIsMonitoring(false);
+      return;
+    }
 
-    const interval = setInterval(() => {
-      if (!isMonitoring) {
-        clearInterval(interval);
-        return;
-      }
-
-      // Randomly detect a sound (10% chance every 3 seconds)
-      if (Math.random() < 0.1) {
+    // Detect sounds more frequently (30% chance every 4 seconds)
+    detectionIntervalRef.current = setInterval(() => {
+      if (Math.random() < 0.3) {
         const randomAlert = enabledAlerts[Math.floor(Math.random() * enabledAlerts.length)];
         const confidence = Math.floor(Math.random() * 20) + 80;
         
@@ -102,7 +116,7 @@ export default function SoundDetectionScreen() {
           [{ text: 'OK' }]
         );
       }
-    }, 3000);
+    }, 4000);
   };
 
   const toggleAlert = (id: string) => {

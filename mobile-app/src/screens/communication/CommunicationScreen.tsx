@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CommunicationStackParamList } from '@/navigation/CommunicationNavigator';
 import { COLORS } from '@/utils/constants';
 
 const { width } = Dimensions.get('window');
 
+type CommunicationScreenNavigationProp = StackNavigationProp<
+  CommunicationStackParamList,
+  'CommunicationHub'
+>;
+
 export default function CommunicationScreen() {
+  const navigation = useNavigation<CommunicationScreenNavigationProp>();
   const [activeFeature, setActiveFeature] = useState<string | null>(null);
 
   const features = [
@@ -51,19 +60,30 @@ export default function CommunicationScreen() {
 
   const handleFeaturePress = (featureId: string) => {
     setActiveFeature(featureId);
-    Alert.alert(
-      'Feature Coming Soon',
-      `${features.find(f => f.id === featureId)?.title} will be implemented in the next update.`,
-      [{ text: 'OK' }]
-    );
+    
+    switch (featureId) {
+      case 'sign-recognition':
+        navigation.navigate('SignRecognition');
+        break;
+      case 'speech-to-text':
+        navigation.navigate('SpeechToText');
+        break;
+      case 'text-to-sign':
+        navigation.navigate('TextToSign');
+        break;
+      case 'sound-detection':
+        navigation.navigate('SoundDetection');
+        break;
+      default:
+        break;
+    }
   };
 
   const handleQuickAction = (actionId: string) => {
-    Alert.alert(
-      'Action',
-      `${quickActions.find(a => a.id === actionId)?.title} pressed`,
-      [{ text: 'OK' }]
-    );
+    if (actionId === 'emergency') {
+      navigation.navigate('EmergencySOS');
+    }
+    // Other actions can be implemented later
   };
 
   return (

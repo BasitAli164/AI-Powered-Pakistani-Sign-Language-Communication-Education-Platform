@@ -13,7 +13,28 @@ export default function SignRecognitionScreen() {
   const [recognizedText, setRecognizedText] = useState('');
   const [confidence, setConfidence] = useState(0);
   const cameraRef = useRef<CameraView>(null);
+  const recognitionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  useEffect(() => {
+    if (isRecording) {
+      // Start continuous recognition
+      recognitionIntervalRef.current = setInterval(() => {
+        simulateRecognition();
+      }, 2000); // Update every 2 seconds
+    } else {
+      // Stop recognition
+      if (recognitionIntervalRef.current) {
+        clearInterval(recognitionIntervalRef.current);
+        recognitionIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (recognitionIntervalRef.current) {
+        clearInterval(recognitionIntervalRef.current);
+      }
+    };
+  }, [isRecording]);
 
   const toggleRecording = () => {
     if (isRecording) {
@@ -25,8 +46,6 @@ export default function SignRecognitionScreen() {
 
   const startRecognition = () => {
     setIsRecording(true);
-    // Mock recognition - replace with actual AI model
-    simulateRecognition();
   };
 
   const stopRecognition = () => {
@@ -37,16 +56,12 @@ export default function SignRecognitionScreen() {
 
   const simulateRecognition = () => {
     // Mock data - replace with actual sign recognition
-    const mockSigns = ['Hello', 'Thank you', 'Please', 'Yes', 'No', 'Help'];
+    const mockSigns = ['Hello', 'Thank you', 'Please', 'Yes', 'No', 'Help', 'Good morning', 'How are you?', 'I love you', 'Sorry'];
     const randomSign = mockSigns[Math.floor(Math.random() * mockSigns.length)];
     const randomConfidence = Math.floor(Math.random() * 30) + 70;
     
-    setTimeout(() => {
-      if (isRecording) {
-        setRecognizedText(randomSign);
-        setConfidence(randomConfidence);
-      }
-    }, 1000);
+    setRecognizedText(randomSign);
+    setConfidence(randomConfidence);
   };
 
   const flipCamera = () => {
@@ -78,84 +93,84 @@ export default function SignRecognitionScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
-            <Ionicons name="close" size={28} color={COLORS.WHITE} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Sign Recognition</Text>
-          <TouchableOpacity style={styles.headerButton} onPress={flipCamera}>
-            <Ionicons name="camera-reverse" size={28} color={COLORS.WHITE} />
-          </TouchableOpacity>
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
+      
+      {/* Header - Positioned absolutely over camera */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
+          <Ionicons name="close" size={28} color={COLORS.WHITE} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Sign Recognition</Text>
+        <TouchableOpacity style={styles.headerButton} onPress={flipCamera}>
+          <Ionicons name="camera-reverse" size={28} color={COLORS.WHITE} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Recognition Overlay */}
+      <View style={styles.overlay}>
+        <View style={styles.frameContainer}>
+          <View style={[styles.corner, styles.topLeft]} />
+          <View style={[styles.corner, styles.topRight]} />
+          <View style={[styles.corner, styles.bottomLeft]} />
+          <View style={[styles.corner, styles.bottomRight]} />
+          
+          {isRecording && (
+            <View style={styles.scanLine} />
+          )}
         </View>
 
-        {/* Recognition Overlay */}
-        <View style={styles.overlay}>
-          <View style={styles.frameContainer}>
-            <View style={[styles.corner, styles.topLeft]} />
-            <View style={[styles.corner, styles.topRight]} />
-            <View style={[styles.corner, styles.bottomLeft]} />
-            <View style={[styles.corner, styles.bottomRight]} />
-            
-            {isRecording && (
-              <View style={styles.scanLine} />
+        <Text style={styles.instructionText}>
+          {isRecording ? 'Performing sign...' : 'Tap record to start'}
+        </Text>
+      </View>
+
+      {/* Recognition Result */}
+      {recognizedText && (
+        <View style={styles.resultContainer}>
+          <View style={styles.resultCard}>
+            <Text style={styles.resultLabel}>Recognized Sign:</Text>
+            <Text style={styles.resultText}>{recognizedText}</Text>
+            <View style={styles.confidenceContainer}>
+              <Text style={styles.confidenceLabel}>Confidence:</Text>
+              <View style={styles.confidenceBar}>
+                <View
+                  style={[
+                    styles.confidenceFill,
+                    { width: `${confidence}%` }
+                  ]}
+                />
+              </View>
+              <Text style={styles.confidenceText}>{confidence}%</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* Controls */}
+      <View style={styles.controls}>
+        <TouchableOpacity
+          style={[
+            styles.recordButton,
+            isRecording && styles.recordButtonActive
+          ]}
+          onPress={toggleRecording}
+        >
+          <View style={[
+            styles.recordButtonInner,
+            isRecording && styles.recordButtonInnerActive
+          ]}>
+            {isRecording ? (
+              <View style={styles.stopIcon} />
+            ) : (
+              <Ionicons name="hand-left" size={32} color={COLORS.WHITE} />
             )}
           </View>
-
-          <Text style={styles.instructionText}>
-            {isRecording ? 'Performing sign...' : 'Tap record to start'}
-          </Text>
-        </View>
-
-        {/* Recognition Result */}
-        {recognizedText && (
-          <View style={styles.resultContainer}>
-            <View style={styles.resultCard}>
-              <Text style={styles.resultLabel}>Recognized Sign:</Text>
-              <Text style={styles.resultText}>{recognizedText}</Text>
-              <View style={styles.confidenceContainer}>
-                <Text style={styles.confidenceLabel}>Confidence:</Text>
-                <View style={styles.confidenceBar}>
-                  <View 
-                    style={[
-                      styles.confidenceFill, 
-                      { width: `${confidence}%` }
-                    ]} 
-                  />
-                </View>
-                <Text style={styles.confidenceText}>{confidence}%</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Controls */}
-        <View style={styles.controls}>
-          <TouchableOpacity 
-            style={[
-              styles.recordButton,
-              isRecording && styles.recordButtonActive
-            ]}
-            onPress={toggleRecording}
-          >
-            <View style={[
-              styles.recordButtonInner,
-              isRecording && styles.recordButtonInnerActive
-            ]}>
-              {isRecording ? (
-                <View style={styles.stopIcon} />
-              ) : (
-                <Ionicons name="hand-left" size={32} color={COLORS.WHITE} />
-              )}
-            </View>
-          </TouchableOpacity>
-          
-          <Text style={styles.controlLabel}>
-            {isRecording ? 'Stop' : 'Start Recognition'}
-          </Text>
-        </View>
-      </CameraView>
+        </TouchableOpacity>
+        
+        <Text style={styles.controlLabel}>
+          {isRecording ? 'Stop' : 'Start Recognition'}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -197,12 +212,17 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 20,
+    zIndex: 10,
   },
   headerButton: {
     width: 44,
@@ -218,9 +238,14 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
   },
   overlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 5,
   },
   frameContainer: {
     width: width * 0.7,
@@ -281,6 +306,7 @@ const styles = StyleSheet.create({
     top: 150,
     left: 20,
     right: 20,
+    zIndex: 15,
   },
   resultCard: {
     backgroundColor: 'rgba(255,255,255,0.95)',
