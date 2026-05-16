@@ -55,7 +55,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location for emergency services."
         }
-      ]
+      ],
+      "expo-secure-store"
     ]
   }
 }
