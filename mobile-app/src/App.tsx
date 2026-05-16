@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, BackHandler, Alert } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import AppNavigator from '@/navigation/AppNavigator';
@@ -26,12 +26,27 @@ export default function App() {
     };
 
     initialize();
+
+    // Handle Android back button
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      Alert.alert(
+        'Exit App',
+        'Are you sure you want to exit?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Exit', onPress: () => BackHandler.exitApp() },
+        ]
+      );
+      return true; // Prevent default behavior
+    });
+
+    return () => backHandler.remove();
   }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <StatusBar style="auto" />
+        <StatusBar style="dark" />
         <AppNavigator />
       </SafeAreaProvider>
     </GestureHandlerRootView>
